@@ -86,6 +86,18 @@
                     </div>
                 </div>
                 <div class="card-body">
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+        </div>
+    @endif
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
@@ -117,7 +129,7 @@
                                             <a href="{{ route('operation-areas.edit', $area->id) }}" class="btn btn-sm btn-primary me-2">
                                                 <i class='bx bx-edit'></i>
                                             </a>
-                                            <form action="{{ route('operation-areas.destroy', $area->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذه المنطقة؟');">
+                                            <form action="{{ route('operation-areas.destroy', $area->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('هل أنت متأكد من حذف هذه المنطقة؟');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-danger">
@@ -150,8 +162,8 @@
 
 @section('scripts')
 <script>
+    // بحث في الجدول
     $(document).ready(function() {
-        // بحث في الجدول
         $("#search-areas").on("keyup", function() {
             var value = $(this).val().toLowerCase();
             $("table tbody tr").filter(function() {

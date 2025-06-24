@@ -257,7 +257,13 @@
                         <span>مناطق العمليات</span>
                     </a>
                 </li>
-                <!-- يمكن إضافة المزيد من عناصر القائمة هنا في المستقبل -->
+                <li class="menu-item {{ request()->routeIs('observers.*') ? 'active' : '' }}">
+    <a href="{{ route('observers.index') }}" class="menu-link">
+        <i class='bx bx-user-check'></i>
+        <span>الراصدين</span>
+    </a>
+</li>
+<!-- يمكن إضافة المزيد من عناصر القائمة هنا في المستقبل -->
             </ul>
         </aside>
         <!-- / Menu -->

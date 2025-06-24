@@ -14,6 +14,19 @@ use Illuminate\Validation\Rule;
 class OperationAreaController extends Controller
 {
     /**
+     * Get operation areas by province (AJAX for observers form).
+     */
+    public function byProvince($provinceId)
+    {
+        $areas = \App\Models\OperationArea::where('province_id', $provinceId)
+            ->where('is_active', true)
+            ->select('id', 'name as name')
+            ->orderBy('name')
+            ->get();
+        return response()->json($areas);
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index()
@@ -50,65 +63,45 @@ class OperationAreaController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-        try {
-            // التحقق من البيانات
-            $validated = $request->validate([
-                'code' => 'required|string|max:50|unique:operation_areas,code',
-                'name' => 'required|string|max:100',
-                'description' => 'nullable|string|max:500',
-                'province_id' => 'required|exists:provinces,id',
-                'district_id' => 'nullable|exists:districts,id',
-                'subdistrict_id' => 'nullable|exists:subdistricts,id',
-                'village_id' => 'nullable|exists:villages,id',
-                'is_active' => 'boolean',
-                'observers' => 'nullable|array',
-                'response_points' => 'nullable|array',
-            ]);
+{
+    $validated = $request->validate([
+        'code' => 'required|string|max:50|unique:operation_areas,code',
+        'name' => 'required|string|max:100',
+        'description' => 'nullable|string|max:500',
+        'province_id' => 'required|exists:provinces,id',
+        'district_id' => 'nullable|exists:districts,id',
+        'subdistrict_id' => 'nullable|exists:subdistricts,id',
+        'village_id' => 'nullable|exists:villages,id',
+        'is_active' => 'boolean',
+        'observers' => 'nullable|array',
+        'response_points' => 'nullable|array',
+    ]);
 
-            // إنشاء منطقة العمليات الجديدة
-            $operationArea = OperationArea::create($validated);
+    $operationArea = OperationArea::create($validated);
 
-            // إضافة الراصدين إذا تم تحديدهم (سيتم تنفيذه لاحقًا)
-            if ($request->has('observers') && !empty($request->observers)) {
-                // $operationArea->observers()->sync($request->observers);
-            }
-
-            // إضافة نقاط الاستجابة إذا تم تحديدها (سيتم تنفيذه لاحقًا)
-            if ($request->has('response_points') && !empty($request->response_points)) {
-                // $operationArea->responsePoints()->sync($request->response_points);
-            }
-
-            // تنظيف جلسة الأخطاء وإضافة رسالة النجاح
-            $request->session()->forget('errors');
-            $request->session()->flash('success', 'تم إضافة منطقة العمليات بنجاح');
-            
-            // إذا كان الطلب بواسطة AJAX
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'تم إضافة منطقة العمليات بنجاح',
-                    'redirect' => route('operation-areas.index')
-                ]);
-            }
-            
-            // التوجيه العادي للطلبات غير AJAX
-            return redirect()->route('operation-areas.index');
-        } catch (\Exception $e) {
-            // في حالة حدوث خطأ مع طلب AJAX
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'errors' => [
-                        'error' => 'حدث خطأ أثناء إنشاء منطقة العمليات: ' . $e->getMessage()
-                    ]
-                ], 422);
-            }
-            
-            // في حالة حدوث خطأ مع الطلبات العادية
-            return back()->withInput()->withErrors(['error' => 'حدث خطأ أثناء إنشاء منطقة العمليات: ' . $e->getMessage()]);
-        }
+    // إضافة الراصدين إذا تم تحديدهم (سيتم تنفيذه لاحقًا)
+    if ($request->has('observers') && !empty($request->observers)) {
+        // $operationArea->observers()->sync($request->observers);
     }
+
+    // إضافة نقاط الاستجابة إذا تم تحديدها (سيتم تنفيذه لاحقًا)
+    if ($request->has('response_points') && !empty($request->response_points)) {
+        // $operationArea->responsePoints()->sync($request->response_points);
+    }
+
+    $request->session()->flash('success', 'تم إضافة منطقة العمليات بنجاح');
+
+    if ($request->ajax()) {
+        return response()->json([
+            'success' => true,
+            'message' => 'تم إضافة منطقة العمليات بنجاح',
+            'redirect' => route('operation-areas.index')
+        ]);
+    }
+
+    return redirect()->route('operation-areas.index');
+}
+
 
     /**
      * Display the specified resource.
@@ -136,56 +129,82 @@ class OperationAreaController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $operationArea = OperationArea::findOrFail($id);
+        try {
+            $operationArea = OperationArea::findOrFail($id);
 
-        // التحقق من البيانات
-        $validated = $request->validate([
-            'code' => [
-                'required',
-                'string',
-                'max:50',
-                Rule::unique('operation_areas')->ignore($operationArea->id),
-            ],
-            'description' => 'required|string|max:500',
-            'province_id' => 'required|exists:provinces,id',
-            'district_id' => 'nullable|exists:districts,id',
-            'subdistrict_id' => 'nullable|exists:subdistricts,id',
-            'village_id' => 'nullable|exists:villages,id',
-            'is_active' => 'boolean',
-            'observers' => 'nullable|array',
-            'response_points' => 'nullable|array',
-        ]);
+            // التحقق من البيانات
+            $validated = $request->validate([
+                'code' => [
+                    'required',
+                    'string',
+                    'max:50',
+                    Rule::unique('operation_areas')->ignore($operationArea->id),
+                ],
+                'name' => 'required|string|max:100',
+                'description' => 'nullable|string|max:500',
+                'province_id' => 'required|exists:provinces,id',
+                'district_id' => 'nullable|exists:districts,id',
+                'subdistrict_id' => 'nullable|exists:subdistricts,id',
+                'village_id' => 'nullable|exists:villages,id',
+                'is_active' => 'boolean',
+                'observers' => 'nullable|array',
+                'response_points' => 'nullable|array',
+            ]);
 
-        // تحديث منطقة العمليات
-        $operationArea->update($validated);
+            DB::beginTransaction();
+            
+            // تحديث منطقة العمليات
+            $operationArea->update($validated);
 
-        // تحديث الراصدين إذا تم تحديدهم (سيتم تنفيذه لاحقًا)
-        if ($request->has('observers')) {
-            // $operationArea->observers()->sync($request->observers);
+            // تحديث الراصدين إذا تم تحديدهم (سيتم تنفيذه لاحقًا)
+            if ($request->has('observers')) {
+                // $operationArea->observers()->sync($request->observers);
+            }
+
+            // تحديث نقاط الاستجابة إذا تم تحديدها (سيتم تنفيذه لاحقًا)
+            if ($request->has('response_points')) {
+                // $operationArea->responsePoints()->sync($request->response_points);
+            }
+
+            DB::commit();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'تم تحديث منطقة العمليات بنجاح',
+                    'redirect' => route('operation-areas.index')
+                ]);
+            }
+
+            return redirect()->route('operation-areas.index')
+                ->with('success', 'تم تحديث منطقة العمليات بنجاح');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'حدث خطأ أثناء تحديث منطقة العمليات: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return back()->withInput()
+                ->with('error', 'حدث خطأ أثناء تحديث منطقة العمليات: ' . $e->getMessage());
         }
-
-        // تحديث نقاط الاستجابة إذا تم تحديدها (سيتم تنفيذه لاحقًا)
-        if ($request->has('response_points')) {
-            // $operationArea->responsePoints()->sync($request->response_points);
-        }
-
-        return redirect()->route('operation-areas.index')
-            ->with('success', 'تم تحديث منطقة العمليات بنجاح');
     }
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
-    {
+{
+    try {
         $operationArea = OperationArea::findOrFail($id);
-        
-        // يمكن إضافة التحقق من وجود سجلات مرتبطة هنا قبل الحذف
-        // مثال: if ($operationArea->reports()->count() > 0) { return back()->with('error', 'لا يمكن حذف منطقة العمليات لوجود تقارير مرتبطة بها'); }
-        
         $operationArea->delete();
-
-        return redirect()->route('operation-areas.index')
-            ->with('success', 'تم حذف منطقة العمليات بنجاح');
+        return redirect()->route('operation-areas.index')->with('success', 'تم حذف منطقة العمليات بنجاح (حذف ناعم).');
+    } catch (\Exception $e) {
+        return redirect()->route('operation-areas.index')->with('error', 'حدث خطأ أثناء حذف منطقة العمليات: ' . $e->getMessage());
     }
+}
 }

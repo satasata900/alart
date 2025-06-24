@@ -10,6 +10,15 @@ Route::get('/', function () {
 
 // Operation Areas Routes
 Route::resource('operation-areas', OperationAreaController::class);
+// AJAX endpoint for observers province filter
+Route::get('operation-areas/by-province/{province}', [OperationAreaController::class, 'byProvince'])->name('operation-areas.byProvince');
+
+// Observers (راصدين) Routes
+Route::resource('observers', \App\Http\Controllers\ObserverController::class);
+Route::post('observers/{observer}/toggle', [\App\Http\Controllers\ObserverController::class, 'toggle'])->name('observers.toggle');
+Route::get('observers/{observer}/activity', [\App\Http\Controllers\ObserverController::class, 'activity'])->name('observers.activity');
+Route::post('observers/{observer}/toggle', [\App\Http\Controllers\ObserverController::class, 'toggle'])->name('observers.toggle');
+Route::get('observers/{observer}/activity', [\App\Http\Controllers\ObserverController::class, 'activity'])->name('observers.activity');
 
 // Location API Routes for Cascading Dropdowns
 Route::prefix('locations')->name('locations.')->group(function () {
