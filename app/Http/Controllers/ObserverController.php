@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Observer;
 use App\Models\OperationArea;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ObserverController extends Controller
 {
@@ -62,19 +63,30 @@ class ObserverController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'username' => 'required|string|max:50|unique:observers,username,'.$observer->id,
+            'username' => [
+    'required',
+    'string',
+    'max:50',
+    Rule::unique('observers', 'username')->ignore($observer->id)->whereNull('deleted_at'),
+],
             'password' => 'nullable|string|min:6',
-            'code' => 'required|string|max:50|unique:observers,code,'.$observer->id,
+            'code' => [
+    'required',
+    'string',
+    'max:50',
+    Rule::unique('observers', 'code')->ignore($observer->id)->whereNull('deleted_at'),
+],
             'whatsapp' => 'nullable|string|max:50',
             'phone' => 'nullable|string|max:50',
             'description' => 'nullable|string',
             'rank_stars' => 'required|integer|min:1|max:5',
             'is_active' => 'boolean',
             'province_id' => 'required|exists:provinces,id',
-            'operation_areas' => 'required|array',
+            'operation_areas' => 'nullable|array',
             'operation_areas.*' => 'exists:operation_areas,id',
         ]);
-        $invalidAreas = \App\Models\OperationArea::whereIn('id', $data['operation_areas'])
+        $areaIds = $data['operation_areas'] ?? [];
+        $invalidAreas = \App\Models\OperationArea::whereIn('id', $areaIds)
             ->where('province_id', '!=', $data['province_id'])
             ->pluck('id');
         if ($invalidAreas->count() > 0) {
@@ -85,7 +97,7 @@ class ObserverController extends Controller
         }
         $observer->fill($data);
         $observer->save();
-        $observer->operationAreas()->sync($data['operation_areas']);
+        $observer->operationAreas()->sync($areaIds);
         \App\Models\ActivityLog::create([
             'observer_id' => $observer->id,
             'action' => 'update',
@@ -119,21 +131,32 @@ class ObserverController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'username' => 'required|string|max:50|unique:observers,username',
+            'username' => [
+    'required',
+    'string',
+    'max:50',
+    Rule::unique('observers', 'username')->whereNull('deleted_at'),
+],
             'password' => 'required|string|min:6',
-            'code' => 'required|string|max:50|unique:observers,code',
+            'code' => [
+    'required',
+    'string',
+    'max:50',
+    Rule::unique('observers', 'code')->whereNull('deleted_at'),
+],
             'whatsapp' => 'nullable|string|max:50',
             'phone' => 'nullable|string|max:50',
             'description' => 'nullable|string',
             'rank_stars' => 'required|integer|min:1|max:5',
             'is_active' => 'boolean',
             'province_id' => 'required|exists:provinces,id',
-            'operation_areas' => 'required|array',
+            'operation_areas' => 'nullable|array',
             'operation_areas.*' => 'exists:operation_areas,id',
         ]);
 
         // تحقق أن جميع المناطق المختارة تتبع المحافظة المختارة
-        $invalidAreas = \App\Models\OperationArea::whereIn('id', $data['operation_areas'])
+        $areaIds = $data['operation_areas'] ?? [];
+        $invalidAreas = \App\Models\OperationArea::whereIn('id', $areaIds)
             ->where('province_id', '!=', $data['province_id'])
             ->pluck('id');
         if ($invalidAreas->count() > 0) {
@@ -141,7 +164,7 @@ class ObserverController extends Controller
         }
 
         $observer = Observer::create($data);
-        $observer->operationAreas()->sync($data['operation_areas']);
+        $observer->operationAreas()->sync($areaIds);
         return redirect()->route('observers.index')->with('success', 'تم إضافة الراصد بنجاح');
     }
 }

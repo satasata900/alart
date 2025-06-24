@@ -3,12 +3,10 @@
 @section('content')
 <div class="container-fluid">
     <h2 class="mb-4">إضافة راصد جديد</h2>
-    @if($errors->any())
+    @if($errors->has('code'))
         <div class="alert alert-danger">
             <ul class="mb-0">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
+                <li>{{ $errors->first('code') }}</li>
             </ul>
         </div>
     @endif
@@ -20,7 +18,10 @@
         </div>
         <div class="mb-3">
             <label class="form-label">رمز الراصد <span class="text-danger">*</span></label>
-            <input type="text" name="code" class="form-control" required value="{{ old('code') }}">
+            <input type="text" name="code" class="form-control @error('code') is-invalid @enderror" required value="{{ old('code') }}">
+            @error('code')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
         <div class="mb-3">
             <label class="form-label">رقم الواتساب</label>

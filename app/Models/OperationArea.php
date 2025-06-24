@@ -10,6 +10,21 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class OperationArea extends Model
 {
     use SoftDeletes;
+
+    protected static function booted()
+    {
+        static::deleting(function ($area) {
+            // Detach all observer relationships when area is deleted (soft or hard)
+            $area->observers()->detach();
+        });
+    }
+
+    use SoftDeletes;
+
+    public function observers()
+    {
+        return $this->belongsToMany(\App\Models\Observer::class, 'observer_operation_area');
+    }
     /**
      * The attributes that are mass assignable.
      *
