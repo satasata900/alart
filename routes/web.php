@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\OperationAreaController;
+use App\Http\Controllers\ResponsePointController;
+use App\Http\Controllers\ResponseTeamMemberController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -27,3 +29,13 @@ Route::prefix('locations')->name('locations.')->group(function () {
     Route::get('/subdistricts/{district}', [LocationController::class, 'getSubdistrictsByDistrict'])->name('subdistricts');
     Route::get('/villages/{subdistrict}', [LocationController::class, 'getVillagesBySubdistrict'])->name('villages');
 });
+
+// Response Points (نقاط الاستجابة) Routes
+Route::get('response-dashboard', [ResponsePointController::class, 'dashboard'])->name('response.dashboard');
+Route::resource('response-points', ResponsePointController::class);
+Route::post('response-points/{responsePoint}/toggle', [ResponsePointController::class, 'toggle'])->name('response-points.toggle');
+
+// Response Team Members Routes
+Route::resource('response-team-members', ResponseTeamMemberController::class);
+Route::post('response-team-members/{responseTeamMember}/toggle', [ResponseTeamMemberController::class, 'toggle'])->name('response-team-members.toggle');
+Route::get('response-points/{responsePoint}/team', [ResponseTeamMemberController::class, 'indexByResponsePoint'])->name('response-points.team');

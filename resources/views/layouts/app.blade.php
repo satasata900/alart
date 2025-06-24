@@ -263,6 +263,18 @@
         <span>الراصدين</span>
     </a>
 </li>
+<li class="menu-item {{ request()->routeIs('response.*') || request()->routeIs('response-points.*') ? 'active' : '' }}">
+    <a href="{{ route('response.dashboard') }}" class="menu-link">
+        <i class='bx bx-shield-quarter'></i>
+        <span>نقاط الاستجابة</span>
+    </a>
+</li>
+<li class="menu-item {{ request()->routeIs('response-team-members.*') ? 'active' : '' }}">
+    <a href="{{ route('response-team-members.index') }}" class="menu-link">
+        <i class='bx bx-group'></i>
+        <span>فرق الاستجابة</span>
+    </a>
+</li>
 <!-- يمكن إضافة المزيد من عناصر القائمة هنا في المستقبل -->
             </ul>
         </aside>
