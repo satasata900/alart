@@ -34,8 +34,9 @@ class ResponsePointController extends Controller
     {
         $provinces = Province::orderBy('name_ar')->get();
         $operationAreas = OperationArea::orderBy('name')->get();
+        $observers = \App\Models\Observer::orderBy('name')->get();
         
-        return view('response-points.create', compact('provinces', 'operationAreas'));
+        return view('response-points.create', compact('provinces', 'operationAreas', 'observers'));
     }
 
     /**
@@ -46,16 +47,68 @@ class ResponsePointController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:response_points',
-            'operation_area_id' => 'required|exists:operation_areas,id',
+            'province_id' => 'required|exists:provinces,id',
+            'operation_areas' => 'required|array',
+            'operation_areas.*' => 'exists:operation_areas,id',
+            'observers' => 'nullable|array',
+            'observers.*' => 'exists:observers,id',
             'address' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'capacity' => 'nullable|integer|min:0',
-            'location_lat' => 'nullable|numeric',
-            'location_lng' => 'nullable|numeric',
             'description' => 'nullable|string',
         ]);
         
-        $responsePoint = ResponsePoint::create($request->all());
+        // التحقق من أن مناطق العمليات المختارة تنتمي للمحافظة المحددة
+        $provinceId = $request->province_id;
+        $selectedOperationAreas = OperationArea::whereIn('id', $request->operation_areas)
+            ->where('province_id', $provinceId)
+            ->get();
+        
+        if ($selectedOperationAreas->count() !== count($request->operation_areas)) {
+            return redirect()->back()->withInput()
+                ->withErrors(['operation_areas' => 'بعض مناطق العمليات المختارة لا تنتمي للمحافظة المحددة']);
+        }
+        
+        // التحقق من أن الراصدين المختارين ينتمون للمحافظة المحددة (إذا تم اختيارهم)
+        if ($request->has('observers') && is_array($request->observers) && count($request->observers) > 0) {
+            $selectedObservers = \App\Models\Observer::whereIn('id', $request->observers)
+                ->where('province_id', $provinceId)
+                ->get();
+                
+            if ($selectedObservers->count() !== count($request->observers)) {
+                return redirect()->back()->withInput()
+                    ->withErrors(['observers' => 'بعض الراصدين المختارين لا ينتمون للمحافظة المحددة']);
+            }
+        }
+        
+        // استخدام أول منطقة عمليات كمنطقة رئيسية للنقطة
+        $primaryOperationAreaId = $request->operation_areas[0];
+        $primaryOperationArea = $selectedOperationAreas->firstWhere('id', $primaryOperationAreaId);
+        
+        // إنشاء نقطة الاستجابة مع المنطقة الرئيسية
+        $responsePoint = new ResponsePoint([
+            'name' => $request->name,
+            'code' => $request->code,
+            'operation_area_id' => $primaryOperationAreaId,
+            'province_id' => $provinceId,
+            'district_id' => $primaryOperationArea->district_id,
+            'subdistrict_id' => $primaryOperationArea->subdistrict_id,
+            'village_id' => $primaryOperationArea->village_id,
+            'address' => $request->address,
+            'description' => $request->description,
+            'is_active' => true
+        ]);
+        
+        $responsePoint->save();
+        
+        // إضافة علاقات مناطق العمليات الإضافية (إذا وجدت)
+        if (count($request->operation_areas) > 1) {
+            // هنا يمكن إضافة علاقة مناطق العمليات الإضافية عندما يتم إنشاء جدول العلاقات المتعددة
+            // $responsePoint->additionalOperationAreas()->attach($request->operation_areas);
+        }
+        
+        // إضافة علاقات الراصدين (إذا وجدت)
+        if ($request->has('observers') && is_array($request->observers) && count($request->observers) > 0) {
+            $responsePoint->observers()->attach($request->observers);
+        }
         
         return redirect()->route('response-points.index')
             ->with('success', 'تم إنشاء نقطة الاستجابة بنجاح');
@@ -76,10 +129,17 @@ class ResponsePointController extends Controller
      */
     public function edit(ResponsePoint $responsePoint)
     {
-        $provinces = Province::orderBy('name_ar')->get();
-        $operationAreas = OperationArea::orderBy('name')->get();
+        // تحميل الراصدين المرتبطين بنقطة الاستجابة
+        $responsePoint->load('observers');
         
-        return view('response-points.edit', compact('responsePoint', 'provinces', 'operationAreas'));
+        $provinces = Province::orderBy('name_ar')->get();
+        $operationAreas = OperationArea::where('province_id', $responsePoint->province_id)->orderBy('name')->get();
+        $observers = \App\Models\Observer::where('province_id', $responsePoint->province_id)->orderBy('name')->get();
+        
+        // الحصول على مصفوفة بمعرفات الراصدين المرتبطين
+        $selectedObserverIds = $responsePoint->observers->pluck('id')->toArray();
+        
+        return view('response-points.edit', compact('responsePoint', 'provinces', 'operationAreas', 'observers', 'selectedObserverIds'));
     }
 
     /**
@@ -90,16 +150,77 @@ class ResponsePointController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:response_points,code,' . $responsePoint->id,
-            'operation_area_id' => 'required|exists:operation_areas,id',
+            'province_id' => 'required|exists:provinces,id',
+            'operation_areas' => 'required|array',
+            'operation_areas.*' => 'exists:operation_areas,id',
+            'observers' => 'nullable|array',
+            'observers.*' => 'exists:observers,id',
             'address' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'capacity' => 'nullable|integer|min:0',
-            'location_lat' => 'nullable|numeric',
-            'location_lng' => 'nullable|numeric',
             'description' => 'nullable|string',
         ]);
         
-        $responsePoint->update($request->all());
+        // التحقق من أن مناطق العمليات المختارة تنتمي للمحافظة المحددة
+        $provinceId = $request->province_id;
+        $selectedOperationAreas = OperationArea::whereIn('id', $request->operation_areas)
+            ->where('province_id', $provinceId)
+            ->get();
+        
+        if ($selectedOperationAreas->count() !== count($request->operation_areas)) {
+            return redirect()->back()->withInput()
+                ->withErrors(['operation_areas' => 'بعض مناطق العمليات المختارة لا تنتمي للمحافظة المحددة']);
+        }
+        
+        // التحقق من أن الراصدين المختارين ينتمون للمحافظة المحددة (إذا تم اختيارهم)
+        if ($request->has('observers') && is_array($request->observers) && count($request->observers) > 0) {
+            $selectedObservers = \App\Models\Observer::whereIn('id', $request->observers)
+                ->where('province_id', $provinceId)
+                ->get();
+                
+            if ($selectedObservers->count() !== count($request->observers)) {
+                return redirect()->back()->withInput()
+                    ->withErrors(['observers' => 'بعض الراصدين المختارين لا ينتمون للمحافظة المحددة']);
+            }
+        }
+        
+        // استخدام أول منطقة عمليات كمنطقة رئيسية للنقطة
+        $primaryOperationAreaId = $request->operation_areas[0];
+        $primaryOperationArea = $selectedOperationAreas->firstWhere('id', $primaryOperationAreaId);
+        
+        // تحديث نقطة الاستجابة مع المنطقة الرئيسية
+        $responsePoint->update([
+            'name' => $request->name,
+            'code' => $request->code,
+            'operation_area_id' => $primaryOperationAreaId,
+            'province_id' => $provinceId,
+            'district_id' => $primaryOperationArea->district_id,
+            'subdistrict_id' => $primaryOperationArea->subdistrict_id,
+            'village_id' => $primaryOperationArea->village_id,
+            'address' => $request->address,
+            'description' => $request->description,
+            'is_active' => $request->has('is_active') ? true : false
+        ]);
+        
+        // إضافة علاقات مناطق العمليات الإضافية (إذا وجدت)
+        if (count($request->operation_areas) > 1) {
+            // هنا يمكن إضافة علاقة مناطق العمليات الإضافية عندما يتم إنشاء جدول العلاقات المتعددة
+            // $responsePoint->additionalOperationAreas()->sync($request->operation_areas);
+        }
+        
+        // إضافة علاقات الراصدين (إذا وجدت)
+        if ($request->has('observers') && is_array($request->observers) && count($request->observers) > 0) {
+            $responsePoint->observers()->sync($request->observers);
+        } else {
+            // إزالة جميع العلاقات إذا لم يتم تحديد أي راصد
+            $responsePoint->observers()->detach();
+        }
+        
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'تم تحديث نقطة الاستجابة بنجاح',
+                'redirect' => route('response-points.index')
+            ]);
+        }
         
         return redirect()->route('response-points.index')
             ->with('success', 'تم تحديث نقطة الاستجابة بنجاح');

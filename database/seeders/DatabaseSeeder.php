@@ -20,9 +20,18 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
         
+        // Create admin user
+        User::factory()->create([
+            'name' => 'Admin',
+            'email' => 'admin@security.com',
+            'password' => bcrypt('Admin@123'),
+        ]);
+        
         // Seed Syrian administrative divisions
         $this->call([
             SyriaAdminDivisionsSeeder::class,
+            ResponsePointsSeeder::class,
+            ResponseTeamMembersSeeder::class,
         ]);
     }
 }

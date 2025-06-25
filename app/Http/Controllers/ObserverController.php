@@ -9,6 +9,19 @@ use Illuminate\Validation\Rule;
 
 class ObserverController extends Controller
 {
+    /**
+     * Get observers by province (AJAX for response points form).
+     */
+    public function byProvince($provinceId)
+    {
+        $observers = Observer::where('province_id', $provinceId)
+            ->where('is_active', true)
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+        return response()->json($observers);
+    }
+    
     public function index(Request $request)
     {
         $query = Observer::with('operationAreas');

@@ -21,6 +21,7 @@ class Observer extends Model
         'description',
         'rank_stars',
         'is_active',
+        'province_id', // لإتاحة الحفظ الجماعي
     ];
     /**
      * Automatically hash password when set

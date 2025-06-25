@@ -19,8 +19,8 @@ Route::get('operation-areas/by-province/{province}', [OperationAreaController::c
 Route::resource('observers', \App\Http\Controllers\ObserverController::class);
 Route::post('observers/{observer}/toggle', [\App\Http\Controllers\ObserverController::class, 'toggle'])->name('observers.toggle');
 Route::get('observers/{observer}/activity', [\App\Http\Controllers\ObserverController::class, 'activity'])->name('observers.activity');
-Route::post('observers/{observer}/toggle', [\App\Http\Controllers\ObserverController::class, 'toggle'])->name('observers.toggle');
-Route::get('observers/{observer}/activity', [\App\Http\Controllers\ObserverController::class, 'activity'])->name('observers.activity');
+// AJAX endpoint for observers province filter
+Route::get('observers/by-province/{province}', [\App\Http\Controllers\ObserverController::class, 'byProvince'])->name('observers.byProvince');
 
 // Location API Routes for Cascading Dropdowns
 Route::prefix('locations')->name('locations.')->group(function () {
@@ -36,6 +36,6 @@ Route::resource('response-points', ResponsePointController::class);
 Route::post('response-points/{responsePoint}/toggle', [ResponsePointController::class, 'toggle'])->name('response-points.toggle');
 
 // Response Team Members Routes
-Route::resource('response-team-members', ResponseTeamMemberController::class);
-Route::post('response-team-members/{responseTeamMember}/toggle', [ResponseTeamMemberController::class, 'toggle'])->name('response-team-members.toggle');
-Route::get('response-points/{responsePoint}/team', [ResponseTeamMemberController::class, 'indexByResponsePoint'])->name('response-points.team');
+
+
+
