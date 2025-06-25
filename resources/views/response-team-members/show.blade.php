@@ -3,6 +3,7 @@
 @section('title', 'عرض عضو فريق استجابة')
 
 @section('content')
+<div class="alert alert-info text-center mt-5">تم حذف قسم فريق الاستجابة من النظام نهائياً.</div>
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -161,4 +162,5 @@
         </div>
     </div>
 </div>
+<div class="alert alert-info text-center mt-5">تم حذف قسم فريق الاستجابة من النظام نهائياً.</div>
 @endsection

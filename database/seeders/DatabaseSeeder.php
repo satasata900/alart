@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             SyriaAdminDivisionsSeeder::class,
             ResponsePointsSeeder::class,
-            ResponseTeamMembersSeeder::class,
+            
         ]);
     }
 }

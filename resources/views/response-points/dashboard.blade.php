@@ -158,7 +158,7 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="badge bg-info">{{ $point->responseTeamMembers->count() }}</span>
+                                            
                                         </td>
                                         <td>
                                             @if ($point->is_active)

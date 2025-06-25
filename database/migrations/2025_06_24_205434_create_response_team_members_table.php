@@ -1,4 +1,5 @@
 <?php
+// تم تعطيل هذا الملف - حذف جدول فريق الاستجابة نهائياً
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;

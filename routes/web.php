@@ -34,8 +34,3 @@ Route::prefix('locations')->name('locations.')->group(function () {
 Route::get('response-dashboard', [ResponsePointController::class, 'dashboard'])->name('response.dashboard');
 Route::resource('response-points', ResponsePointController::class);
 Route::post('response-points/{responsePoint}/toggle', [ResponsePointController::class, 'toggle'])->name('response-points.toggle');
-
-// Response Team Members Routes
-
-
-

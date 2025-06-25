@@ -82,22 +82,6 @@ class ResponsePoint extends Model
     }
     
     /**
-     * Get the team members for the response point.
-     */
-    public function responseTeamMembers(): HasMany
-    {
-        return $this->hasMany(ResponseTeamMember::class);
-    }
-    
-    /**
-     * Alias for responseTeamMembers for backward compatibility.
-     */
-    public function teamMembers(): HasMany
-    {
-        return $this->responseTeamMembers();
-    }
-    
-    /**
      * Get the observers associated with the response point.
      */
     public function observers(): BelongsToMany

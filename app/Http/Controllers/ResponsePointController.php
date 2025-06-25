@@ -17,12 +17,12 @@ class ResponsePointController extends Controller
     public function index()
     {
         $responsePoints = ResponsePoint::with('operationArea.province', 'operationArea.district', 'operationArea.subdistrict', 'operationArea.village')
-            ->withCount('teamMembers')
+            
             ->paginate(10);
             
         $activeCount = ResponsePoint::where('is_active', true)->count();
         $inactiveCount = ResponsePoint::where('is_active', false)->count();
-        $totalTeamMembers = DB::table('response_team_members')->count();
+        
         
         return view('response-points.index', compact('responsePoints', 'activeCount', 'inactiveCount', 'totalTeamMembers'));
     }
@@ -119,7 +119,7 @@ class ResponsePointController extends Controller
      */
     public function show(ResponsePoint $responsePoint)
     {
-        $responsePoint->load(['operationArea.province', 'operationArea.district', 'operationArea.subdistrict', 'operationArea.village', 'teamMembers']);
+        $responsePoint->load(['operationArea.province', 'operationArea.district', 'operationArea.subdistrict', 'operationArea.village']);
         
         return view('response-points.show', compact('responsePoint'));
     }
