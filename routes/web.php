@@ -3,7 +3,7 @@
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\OperationAreaController;
 use App\Http\Controllers\ResponsePointController;
-use App\Http\Controllers\ResponseTeamMemberController;
+// ResponseTeamMemberController removed
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
