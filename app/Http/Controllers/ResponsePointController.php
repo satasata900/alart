@@ -5,9 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\OperationArea;
 use App\Models\Province;
 use App\Models\ResponsePoint;
-use App\Models\ResponseTeamMember;
+// ResponseTeamMember model removed
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class ResponsePointController extends Controller
 {
@@ -24,7 +25,7 @@ class ResponsePointController extends Controller
         $inactiveCount = ResponsePoint::where('is_active', false)->count();
         
         
-        return view('response-points.index', compact('responsePoints', 'activeCount', 'inactiveCount', 'totalTeamMembers'));
+        return view('response-points.index', compact('responsePoints', 'activeCount', 'inactiveCount'));
     }
 
     /**
@@ -44,17 +45,32 @@ class ResponsePointController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'code' => 'required|string|max:50|unique:response_points',
-            'province_id' => 'required|exists:provinces,id',
-            'operation_areas' => 'required|array',
-            'operation_areas.*' => 'exists:operation_areas,id',
-            'observers' => 'nullable|array',
-            'observers.*' => 'exists:observers,id',
-            'address' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-        ]);
+        try {
+            // التحقق يدوياً من عدم وجود رمز مكرر (مع تجاهل السجلات المحذوفة)
+            $code = $request->input('code');
+            $exists = ResponsePoint::withoutTrashed()->where('code', $code)->exists();
+            
+            if ($exists) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['code' => 'قيمة رمز النقطة مستخدمة بالفعل.']);
+            }
+            
+            // التحقق من باقي الحقول
+            $validatedData = $request->validate([
+                'name' => 'required|string|max:255',
+                'code' => 'required|string|max:50',
+                'province_id' => 'required|exists:provinces,id',
+                'operation_areas' => 'required|array',
+                'operation_areas.*' => 'exists:operation_areas,id',
+                'observers' => 'nullable|array',
+                'observers.*' => 'exists:observers,id',
+                'address' => 'nullable|string|max:255',
+                'description' => 'nullable|string',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->validator)->withInput();
+        }
         
         // التحقق من أن مناطق العمليات المختارة تنتمي للمحافظة المحددة
         $provinceId = $request->province_id;
@@ -252,7 +268,7 @@ class ResponsePointController extends Controller
     }
     
     /**
-     * Display the dashboard with tabs for response points and team members.
+     * Display the dashboard with response points information.
      */
     public function dashboard()
     {
@@ -260,26 +276,14 @@ class ResponsePointController extends Controller
         $responsePointsCount = ResponsePoint::count();
         $activePointsCount = ResponsePoint::where('is_active', true)->count();
         
-        // إحصائيات أعضاء فرق الاستجابة
-        $teamMembersCount = ResponseTeamMember::count();
-        $teamLeadersCount = ResponseTeamMember::where('is_leader', true)->count();
-        
         // بيانات نقاط الاستجابة للجدول
         $responsePoints = ResponsePoint::with('operationArea')
-            ->withCount('responseTeamMembers as team_members_count')
-            ->paginate(10);
-            
-        // بيانات أعضاء فرق الاستجابة للجدول
-        $teamMembers = ResponseTeamMember::with('responsePoint')
             ->paginate(10);
         
         return view('response-points.dashboard', compact(
             'responsePointsCount',
             'activePointsCount',
-            'teamMembersCount',
-            'teamLeadersCount',
-            'responsePoints',
-            'teamMembers'
+            'responsePoints'
         ));
     }
 }

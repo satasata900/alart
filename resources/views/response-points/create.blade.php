@@ -45,8 +45,14 @@
                 </a>
             </div>
             <div class="card-body">
-                <form action="{{ route('response-points.store') }}" method="POST" id="createForm">
+                <form id="createForm">
                     @csrf
+                    <div class="alert alert-success" id="success-message" style="display: none;">
+                        تم إنشاء نقطة الاستجابة بنجاح
+                    </div>
+                    <div class="alert alert-danger" id="error-message" style="display: none;">
+                        حدث خطأ أثناء إنشاء نقطة الاستجابة
+                    </div>
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -129,7 +135,7 @@
                     
                     <div class="row">
                         <div class="col-12 text-center">
-                            <button type="submit" class="btn btn-primary me-sm-3 me-1">حفظ</button>
+                            <button type="button" id="submit-btn" class="btn btn-primary me-sm-3 me-1">حفظ</button>
                             <button type="reset" class="btn btn-label-secondary">إلغاء</button>
                         </div>
                     </div>
@@ -143,8 +149,51 @@
 @section('scripts')
 <script>
     $(document).ready(function() {
+        // تنفيذ النموذج بواسطة AJAX
+        $('#submit-btn').on('click', function(e) {
+            e.preventDefault();
+            
+            // إزالة جميع رسائل الخطأ السابقة
+            $('.is-invalid').removeClass('is-invalid');
+            $('.invalid-feedback').remove();
+            $('#error-message').hide();
+            $('#success-message').hide();
+            
+            var formData = new FormData($('#createForm')[0]);
+            
+            $.ajax({
+                url: '{{ route("response-points.store") }}',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    $('#success-message').show();
+                    setTimeout(function() {
+                        window.location.href = '{{ route("response-points.index") }}';
+                    }, 1000);
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) {
+                        var errors = xhr.responseJSON.errors;
+                        $('#error-message').text('يرجى تصحيح الأخطاء التالية').show();
+                        
+                        $.each(errors, function(key, value) {
+                            $('#' + key).addClass('is-invalid');
+                            $('#' + key).after('<div class="invalid-feedback">' + value[0] + '</div>');
+                        });
+                    } else {
+                        $('#error-message').text('حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.').show();
+                    }
+                }
+            });
+        });
+        
         // عند تغيير المحافظة
-           $('#province_id').on('change', function() {
+        $('#province_id').on('change', function() {
                 var provinceId = $(this).val();
                 if (provinceId) {
                     // جلب مناطق العمليات حسب المحافظة

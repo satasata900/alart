@@ -168,9 +168,7 @@
                                 @else
                                     <div class="text-center py-3">
                                         <p>لا يوجد أعضاء في هذه النقطة</p>
-                                        <a href="{{ route('response-team-members.create') }}?response_point_id={{ $responsePoint->id }}" class="btn btn-primary">
-                                            <i class="bx bx-plus"></i> إضافة عضو جديد
-                                        </a>
+                                        <!-- تم إزالة زر إضافة عضو جديد لفريق الاستجابة -->
                                     </div>
                                 @endif
                             </div>

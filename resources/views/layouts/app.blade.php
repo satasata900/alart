@@ -50,6 +50,10 @@
         .layout-page {
             margin-right: 260px;
             transition: all .2s ease-in-out;
+            width: calc(100% - 260px);
+            padding-right: 1.5rem;
+            padding-left: 1.5rem;
+            box-sizing: border-box;
         }
         
         .menu-vertical {
@@ -75,15 +79,49 @@
             margin-left: 0.5rem;
         }
         
-        .menu-item.active a {
+        .menu-item.active > a {
             color: #696cff;
             font-weight: 600;
         }
         
-        .content-wrapper {
-            padding: 1.5rem;
+        .menu-item .collapse {
+            margin-top: 0.5rem;
         }
         
+        .menu-item .collapse .menu-item {
+            padding-right: 2rem;
+            font-size: 0.9rem;
+        }
+        
+        .menu-item .collapse .menu-item a {
+            padding: 0.4rem 0;
+        }
+        
+        .menu-item .btn-link {
+            color: #697a8d;
+            text-decoration: none;
+        }
+        
+        .menu-item .btn-link:hover {
+            color: #696cff;
+        }
+        
+        .menu-item .btn-link .bx-chevron-down {
+            transition: transform 0.2s;
+        }
+        
+        .menu-item .btn-link[aria-expanded="true"] .bx-chevron-down {
+            transform: rotate(180deg);
+        }
+        
+        .menu-item .menu-link.flex-grow-1 {
+            padding-left: 0;
+        }
+        
+        .container-xxl {
+            max-width: 1440px;
+            width: 100%;
+        }
         .card {
             box-shadow: 0 0 15px 0 rgba(0,0,0,.05);
             border-radius: 0.5rem;
@@ -174,6 +212,8 @@
             box-shadow: 0 0 0 0.25rem rgba(105, 108, 255, 0.1);
         }
         
+        /* تنسيقات أخرى */
+        
         /* تنسيقات أسهم التنقل */
         .pagination svg {
             width: 14px !important;
@@ -263,11 +303,78 @@
         <span>الراصدين</span>
     </a>
 </li>
-<li class="menu-item {{ request()->routeIs('response.*') || request()->routeIs('response-points.*') ? 'active' : '' }}">
-    <a href="{{ route('response.dashboard') }}" class="menu-link">
-        <i class='bx bx-shield-quarter'></i>
-        <span>نقاط الاستجابة</span>
-    </a>
+<li class="menu-item {{ request()->routeIs('response.*') || (request()->routeIs('response-points.*') && !request()->routeIs('response-points.items.*')) ? 'active' : '' }}">
+    <div class="d-flex align-items-center">
+        <a href="{{ route('response.dashboard') }}" class="menu-link flex-grow-1">
+            <i class='bx bx-shield-quarter'></i>
+            <span>نقاط الاستجابة</span>
+        </a>
+        <button class="btn btn-link p-0 ms-2" data-bs-toggle="collapse" data-bs-target="#responseSubmenu" aria-expanded="{{ request()->routeIs('response.*') || (request()->routeIs('response-points.*') && !request()->routeIs('response-points.items.*')) ? 'true' : 'false' }}">
+            <i class='bx bx-chevron-down'></i>
+        </button>
+    </div>
+    <div class="collapse {{ request()->routeIs('response.*') || (request()->routeIs('response-points.*') && !request()->routeIs('response-points.items.*')) ? 'show' : '' }}" id="responseSubmenu">
+        <ul class="navbar-nav ps-3 mt-2">
+            <li class="menu-item {{ request()->routeIs('response-points.create') ? 'active' : '' }}">
+                <a href="{{ route('response-points.create') }}" class="menu-link">
+                    <i class='bx bx-plus'></i>
+                    <span>إضافة نقطة جديدة</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
+
+<!-- قسم إدارة العناصر -->
+<li class="menu-item {{ request()->routeIs('response-points.items.*') ? 'active' : '' }}">
+    <div class="d-flex align-items-center">
+        <a href="{{ route('response-points.items.index', ['responsePoint' => 'all']) }}" class="menu-link flex-grow-1">
+            <i class='bx bx-group'></i>
+            <span>إدارة العناصر</span>
+        </a>
+        <button class="btn btn-link p-0 ms-2" data-bs-toggle="collapse" data-bs-target="#itemsSubmenu" aria-expanded="{{ request()->routeIs('response-points.items.*') ? 'true' : 'false' }}">
+            <i class='bx bx-chevron-down'></i>
+        </button>
+    </div>
+    <div class="collapse {{ request()->routeIs('response-points.items.*') ? 'show' : '' }}" id="itemsSubmenu">
+        <ul class="navbar-nav ps-3 mt-2">
+            <li class="menu-item {{ request()->routeIs('response-points.items.create') ? 'active' : '' }}">
+                <a href="{{ route('response-points.items.create') }}" class="menu-link">
+                    <i class='bx bx-plus'></i>
+                    <span>إضافة عناصر جديدة</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
+
+<!-- قسم البلاغات والتقارير -->
+<li class="menu-item {{ request()->routeIs('reports.*') || request()->routeIs('report-types.*') ? 'active' : '' }}">
+    <div class="d-flex align-items-center">
+        <a href="{{ route('reports.dashboard') }}" class="menu-link flex-grow-1">
+            <i class='bx bx-file'></i>
+            <span>البلاغات والتقارير</span>
+        </a>
+        <button class="btn btn-link p-0 ms-2" data-bs-toggle="collapse" data-bs-target="#reportsSubmenu" aria-expanded="{{ request()->routeIs('reports.*') || request()->routeIs('report-types.*') ? 'true' : 'false' }}">
+            <i class='bx bx-chevron-down'></i>
+        </button>
+    </div>
+    <div class="collapse {{ request()->routeIs('reports.*') || request()->routeIs('report-types.*') ? 'show' : '' }}" id="reportsSubmenu">
+        <ul class="navbar-nav ps-3 mt-2">
+            <li class="menu-item {{ request()->routeIs('reports.create') ? 'active' : '' }}">
+                <a href="{{ route('reports.create') }}" class="menu-link">
+                    <i class='bx bx-plus'></i>
+                    <span>إضافة بلاغ جديد</span>
+                </a>
+            </li>
+            <li class="menu-item {{ request()->routeIs('report-types.*') ? 'active' : '' }}">
+                <a href="{{ route('report-types.index') }}" class="menu-link">
+                    <i class='bx bx-category'></i>
+                    <span>أنواع البلاغات</span>
+                </a>
+            </li>
+        </ul>
+    </div>
 </li>
 
 <!-- يمكن إضافة المزيد من عناصر القائمة هنا في المستقبل -->
@@ -277,52 +384,27 @@
 
         <!-- Layout container -->
         <div class="layout-page">
-            <!-- Navbar -->
-            <nav class="layout-navbar navbar navbar-expand-lg align-items-center">
-                <div class="container-fluid">
-                    <div class="navbar-nav align-items-center">
-                        <div class="nav-item d-flex align-items-center">
-                            <i class='bx bx-search fs-4'></i>
-                            <input type="text" class="form-control border-0 shadow-none" placeholder="بحث..." aria-label="بحث...">
-                        </div>
-                    </div>
 
-                    <div class="navbar-nav align-items-center ms-auto">
-                        <div class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
-                                <i class='bx bx-bell fs-4'></i>
-                            </a>
-                        </div>
-                        <div class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
-                                <i class='bx bx-user fs-4'></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </nav>
             <!-- / Navbar -->
 
             <!-- Content wrapper -->
             <div class="content-wrapper">
-                <div class="container-fluid">
-                    <!-- رسائل النجاح والخطأ -->
-                    @if(session('success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        {{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                    @endif
-
-                    @if(session('error'))
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        {{ session('error') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                    @endif
-                    
-                    @yield('content')
+                <!-- رسائل النجاح والخطأ -->
+                @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show mx-4" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
+                @endif
+
+                @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show mx-4" role="alert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                @endif
+                
+                @yield('content')
             </div>
             <!-- / Content wrapper -->
         </div>
@@ -342,5 +424,6 @@
     </script>
 
     @yield('scripts')
+@stack('scripts')
 </body>
 </html>

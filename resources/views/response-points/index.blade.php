@@ -50,21 +50,7 @@
         </div>
     </div>
     
-    <div class="col-md-4">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="card-title text-white">إجمالي أعضاء الفرق</h5>
-                        <h2 class="mb-0">{{ $totalTeamMembers }}</h2>
-                    </div>
-                    <div class="rounded-circle bg-white bg-opacity-25 p-3">
-                        <i class="bx bx-group fs-1"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- تم إزالة إحصائية أعضاء الفريق -->
 </div>
 
 <!-- جدول نقاط الاستجابة -->
@@ -123,9 +109,7 @@
                                             <a class="dropdown-item" href="{{ route('response-points.edit', $point->id) }}">
                                                 <i class="bx bx-edit-alt me-1"></i> تعديل
                                             </a>
-                                            <a class="dropdown-item" href="{{ route('response-points.team', $point->id) }}">
-                                                <i class="bx bx-group me-1"></i> الفريق
-                                            </a>
+                                            <!-- تم إزالة رابط فريق الاستجابة -->
                                             <form action="{{ route('response-points.toggle', $point->id) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 <button type="submit" class="dropdown-item">

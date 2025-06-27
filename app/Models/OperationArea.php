@@ -19,11 +19,19 @@ class OperationArea extends Model
         });
     }
 
-    use SoftDeletes;
-
     public function observers()
     {
         return $this->belongsToMany(\App\Models\Observer::class, 'observer_operation_area');
+    }
+    
+    /**
+     * Obtener todos los reportes asociados a esta área de operación
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function reports()
+    {
+        return $this->hasMany(Report::class);
     }
     /**
      * The attributes that are mass assignable.

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Observer;
 use App\Models\OperationArea;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class ObserverController extends Controller
@@ -145,18 +146,30 @@ class ObserverController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'username' => [
-    'required',
-    'string',
-    'max:50',
-    Rule::unique('observers', 'username')->whereNull('deleted_at'),
-],
+                'required', 'string', 'max:50',
+                // تعديل التحقق للسماح باستعمال الأسماء المستخدمة في السجلات المحذوفة
+                function ($attribute, $value, $fail) {
+                    $exists = Observer::where('username', $value)
+                        ->whereNull('deleted_at')
+                        ->exists();
+                    if ($exists) {
+                        $fail('قيمة اسم المستخدم مستخدمة بالفعل.');
+                    }
+                },
+            ],
             'password' => 'required|string|min:6',
             'code' => [
-    'required',
-    'string',
-    'max:50',
-    Rule::unique('observers', 'code')->whereNull('deleted_at'),
-],
+                'required', 'string', 'max:50',
+                // تعديل التحقق للسماح باستعمال الرموز المستخدمة في السجلات المحذوفة
+                function ($attribute, $value, $fail) {
+                    $exists = Observer::where('code', $value)
+                        ->whereNull('deleted_at')
+                        ->exists();
+                    if ($exists) {
+                        $fail('قيمة رمز الراصد مستخدمة بالفعل.');
+                    }
+                },
+            ],
             'whatsapp' => 'nullable|string|max:50',
             'phone' => 'nullable|string|max:50',
             'description' => 'nullable|string',
@@ -167,17 +180,29 @@ class ObserverController extends Controller
             'operation_areas.*' => 'exists:operation_areas,id',
         ]);
 
-        // تحقق أن جميع المناطق المختارة تتبع المحافظة المختارة
         $areaIds = $data['operation_areas'] ?? [];
-        $invalidAreas = \App\Models\OperationArea::whereIn('id', $areaIds)
-            ->where('province_id', '!=', $data['province_id'])
-            ->pluck('id');
-        if ($invalidAreas->count() > 0) {
-            return back()->withInput()->withErrors(['operation_areas' => 'بعض مناطق العمليات المختارة لا تتبع المحافظة المحددة.']);
+        if (!empty($areaIds)) {
+            $invalidAreasCount = \App\Models\OperationArea::whereIn('id', $areaIds)
+                ->where('province_id', '!=', $data['province_id'])
+                ->count();
+
+            if ($invalidAreasCount > 0) {
+                return back()->withInput()->withErrors(['operation_areas' => 'بعض مناطق العمليات المختارة لا تتبع المحافظة المحددة.']);
+            }
         }
 
+        $data['password'] = Hash::make($data['password']);
         $observer = Observer::create($data);
+
         $observer->operationAreas()->sync($areaIds);
-        return redirect()->route('observers.index')->with('success', 'تم إضافة الراصد بنجاح');
+
+        \App\Models\ActivityLog::create([
+            'observer_id' => $observer->id,
+            'action' => 'create',
+            'description' => 'إنشاء حساب راصد جديد',
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->route('observers.index')->with('success', 'تم إضافة الراصد بنجاح.');
     }
 }

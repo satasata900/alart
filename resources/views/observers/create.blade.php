@@ -10,7 +10,7 @@
             </ul>
         </div>
     @endif
-    <form action="{{ route('observers.store') }}" method="POST">
+    <form action="{{ route('observers.store') }}" method="POST" id="create-observer-form">
         @csrf
         <div class="mb-3">
             <label class="form-label">اسم الراصد <span class="text-danger">*</span></label>
@@ -120,8 +120,17 @@
                 <option value="0" @if(old('is_active',1)==0) selected @endif>موقوف</option>
             </select>
         </div>
-        <button type="submit" class="btn btn-success">حفظ الراصد</button>
+        <button type="submit" class="btn btn-success" id="submit-button">حفظ الراصد</button>
         <a href="{{ route('observers.index') }}" class="btn btn-secondary">إلغاء</a>
     </form>
 </div>
+@push('scripts')
+<script>
+    document.getElementById('create-observer-form').addEventListener('submit', function() {
+        var submitButton = document.getElementById('submit-button');
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الحفظ...';
+    });
+</script>
+@endpush
 @endsection
