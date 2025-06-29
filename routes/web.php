@@ -32,6 +32,9 @@ Route::prefix('locations')->name('locations.')->group(function () {
     Route::get('/villages/{subdistrict}', [LocationController::class, 'getVillagesBySubdistrict'])->name('villages');
 });
 
+// Endpoint for debugging response points by operation area (for browser test)
+Route::get('test-operation-areas/{area}/response-points', [\App\Http\Controllers\ResponsePointController::class, 'getByOperationArea']);
+
 // Response Points (نقاط الاستجابة) Routes
 Route::get('response-dashboard', [ResponsePointController::class, 'dashboard'])->name('response.dashboard');
 Route::resource('response-points', ResponsePointController::class);

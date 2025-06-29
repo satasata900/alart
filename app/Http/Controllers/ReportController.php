@@ -176,6 +176,24 @@ class ReportController extends Controller
      */
     public function store(Request $request)
     {
+        // التحقق من معرّف النموذج الفريد
+        if (!$request->has('form_token')) {
+            return back()
+                ->withInput()
+                ->with('error', 'حدث خطأ في التحقق من صحة النموذج.');
+        }
+
+        $formToken = $request->input('form_token');
+        $submittedForms = session('submitted_forms', []);
+        
+        // التحقق من أن النموذج لم يتم إرساله من قبل
+        if (in_array($formToken, $submittedForms)) {
+            // إذا كان البلاغ قد تم حفظه بنجاح سابقاً، نوجه المستخدم إلى الداشبورد
+            return redirect()
+                ->route('reports.dashboard')
+                ->with('success', 'تم إنشاء البلاغ بنجاح وإضافته إلى لوحة البلاغات');
+        }
+        
         // التحقق من البيانات
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -251,9 +269,13 @@ class ReportController extends Controller
             
             DB::commit();
             
+            // تسجيل النموذج في الجلسة بعد نجاح الحفظ
+            $submittedForms[] = $formToken;
+            session(['submitted_forms' => $submittedForms]);
+            
             return redirect()
-                ->route('reports.show', $report)
-                ->with('success', 'تم إنشاء البلاغ بنجاح');
+                ->route('reports.dashboard')
+                ->with('success', 'تم إنشاء البلاغ بنجاح وإضافته إلى لوحة البلاغات');
                 
         } catch (\Exception $e) {
             DB::rollBack();

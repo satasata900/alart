@@ -9,6 +9,25 @@
         <h5 class="card-header border-bottom">نموذج إضافة بلاغ جديد</h5>
         <div class="card-body">
                     <form method="POST" action="{{ route('reports.store') }}" id="reportForm" enctype="multipart/form-data" class="form-report">
+    <input type="hidden" name="form_token" value="{{ md5(uniqid()) }}">
+                    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="ti ti-circle-check"></i> {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+    </div>
+@endif
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="ti ti-alert-triangle"></i> {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+    </div>
+@endif
+@if($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="ti ti-alert-triangle"></i> هناك أخطاء في تعبئة النموذج. يرجى مراجعة الحقول بالأسفل.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+    </div>
+@endif
                     <style>
                         .form-report {
                             max-width: 100%;
@@ -72,12 +91,25 @@
                             </div>
                             
                             <div class="col-md-6 mb-3">
-                                <label for="report_date" class="form-label">تاريخ البلاغ</label>
-                                <input type="date" class="form-control @error('report_date') is-invalid @enderror" id="report_date" name="report_date" value="{{ old('report_date', date('Y-m-d')) }}">
-                                @error('report_date')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+    <label for="status" class="form-label">حالة البلاغ <span class="text-danger">*</span></label>
+    <select id="status" name="status" class="form-select @error('status') is-invalid @enderror" required>
+        <option value="">اختر حالة البلاغ</option>
+        @foreach($statuses as $key => $label)
+        <option value="{{ $key }}" @selected(old('status', 'new')==$key)>{{ $label }}</option>
+        @endforeach
+    </select>
+    @error('status')
+    <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
+
+<div class="col-md-6 mb-3">
+    <label for="report_date" class="form-label">تاريخ البلاغ</label>
+    <input type="date" class="form-control @error('report_date') is-invalid @enderror" id="report_date" name="report_date" value="{{ old('report_date', date('Y-m-d')) }}">
+    @error('report_date')
+    <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
                         </div>
                         
                         <!-- معلومات المُبلغ ومكان البلاغ -->
@@ -101,17 +133,34 @@
                             </div>
                             
                             <div class="col-md-6 mb-3" id="observerSelectContainer" style="display: none;">
-                                <label for="observer_id" class="form-label">اسم الراصد <span class="text-danger">*</span></label>
-                                <select id="observer_id" name="observer_id" class="form-select @error('observer_id') is-invalid @enderror">
-                                    <option value="">اختر الراصد</option>
-                                    @foreach($observers as $observer)
-                                    <option value="{{ $observer->id }}" @selected(old('observer_id')==$observer->id)>{{ $observer->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('observer_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+    <label for="observer_id" class="form-label">اسم الراصد <span class="text-danger">*</span></label>
+    <select id="observer_id" name="observer_id" class="form-select @error('observer_id') is-invalid @enderror">
+        <option value="">اختر الراصد</option>
+        @foreach($observers as $observer)
+        <option value="{{ $observer->id }}" @selected(old('observer_id')==$observer->id)>{{ $observer->name }}</option>
+        @endforeach
+    </select>
+    <small class="text-muted">يظهر هذا الحقل فقط إذا كان نوع المُبلغ "راصد"</small>
+    @error('observer_id')
+    <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
+<script>
+    // إظهار/إخفاء حقل الراصد بناءً على نوع المُبلغ
+    $(document).ready(function() {
+        function toggleObserverField() {
+            if ($('#reporter_type').val() === 'observer') {
+                $('#observerSelectContainer').show();
+                $('#observer_id').prop('required', true);
+            } else {
+                $('#observerSelectContainer').hide();
+                $('#observer_id').prop('required', false);
+            }
+        }
+        $('#reporter_type').on('change', toggleObserverField);
+        toggleObserverField(); // عند تحميل الصفحة
+    });
+</script>
                             
                             <div class="col-md-6 mb-3">
                                 <label for="operation_area_id" class="form-label">منطقة العمليات <span class="text-danger">*</span></label>
@@ -146,24 +195,21 @@
                             </div>
                             
                             <div class="col-12 mb-3">
-                                <label for="attachments" class="form-label d-block">تحميل ملفات مرفقة</label>
-                                <div class="input-group">
-                                    <input type="file" class="form-control @error('attachments.*') is-invalid @enderror" id="attachments" name="attachments[]" multiple accept="image/*, application/pdf, .doc, .docx, .xls, .xlsx, .txt">
-                                    <button class="btn btn-outline-primary" type="button" onclick="document.getElementById('attachments').click();">
-                                        <i class="ti ti-paperclip"></i>
-                                    </button>
-                                </div>
-                                <small class="text-muted">يمكن تحميل عدة ملفات من نوع صور، PDF، مستندات Word أو Excel بحد أقصى 10 ميجابايت لكل ملف</small>
-                                @error('attachments.*')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            
-                            <div class="col-12">
-                                <div id="attachmentsPreview" class="d-flex flex-wrap gap-2">
-                                    <!-- سيتم عرض معاينات الملفات هنا -->
-                                </div>
-                            </div>
+    <label for="attachments" class="form-label d-block">تحميل ملفات مرفقة</label>
+    <div class="input-group">
+        <input type="file" class="form-control @error('attachments.*') is-invalid @enderror" id="attachments" name="attachments[]" multiple accept="image/*, application/pdf, .doc, .docx, .xls, .xlsx, .txt" onchange="previewAttachments(event)">
+        <button class="btn btn-outline-primary" type="button" onclick="document.getElementById('attachments').click();">
+            <i class="ti ti-paperclip"></i>
+        </button>
+    </div>
+    <small class="text-muted">يمكن تحميل عدة ملفات من نوع صور، PDF، مستندات Word أو Excel بحد أقصى 10 ميجابايت لكل ملف</small>
+    @error('attachments.*')
+    <div class="invalid-feedback d-block">{{ $message }}</div>
+    @enderror
+</div>
+<div class="col-12">
+    <div id="attachmentsPreview" class="d-flex flex-wrap gap-2"></div>
+</div>
                         </div>
                         
                         <!-- ملاحظات إضافية -->
@@ -192,9 +238,17 @@
                                 <a href="{{ route('reports.index') }}" class="btn btn-label-secondary me-1">
                                     <i class="ti ti-x me-1"></i> إلغاء
                                 </a>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="ti ti-device-floppy me-1"></i> حفظ البلاغ
-                                </button>
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+    <i class="ti ti-device-floppy me-1"></i> حفظ البلاغ
+</button>
+
+<script>
+document.getElementById('reportForm').addEventListener('submit', function() {
+    // تعطيل زر الحفظ
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn').innerHTML = '<i class="ti ti-loader animate-spin me-1"></i> جاري الحفظ...';
+});
+</script>
                             </div>
                         </div>
 
