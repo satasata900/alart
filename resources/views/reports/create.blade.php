@@ -197,3 +197,66 @@
                                 </button>
                             </div>
                         </div>
+
+@section('scripts')
+<script>
+$(document).ready(function() {
+    console.log('تشخيص: سكريبت المنسدلات بدأ العمل');
+
+    // دالة لجلب نقاط الاستجابة
+    function fetchResponsePoints(areaId) {
+        const assignedToSelect = $('#assigned_to');
+        assignedToSelect.empty().append('<option value="">اختر نقطة الاستجابة</option>');
+
+        if (!areaId) {
+            console.log('لم يتم اختيار منطقة عمليات');
+            return;
+        }
+
+        assignedToSelect.prop('disabled', true);
+        assignedToSelect.append('<option value="" disabled selected>جاري التحميل...</option>');
+
+        $.ajax({
+            url: `/test-operation-areas/${areaId}/response-points`,
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                console.log('تشخيص: تم جلب البيانات بنجاح', response);
+                assignedToSelect.empty().append('<option value="">اختر نقطة الاستجابة</option>');
+
+                if (response && Array.isArray(response.data) && response.data.length > 0) {
+                    response.data.forEach(function(point) {
+                        assignedToSelect.append(new Option(`${point.name} (${point.code})`, point.id));
+                    });
+                } else {
+                    console.log('تشخيص: لا توجد نقاط استجابة متاحة لهذه المنطقة.');
+                    assignedToSelect.append('<option value="" disabled>لا توجد نقاط استجابة متاحة</option>');
+                }
+                assignedToSelect.prop('disabled', false);
+            },
+            error: function(xhr, status, error) {
+                console.error('تشخيص: حدث خطأ في جلب البيانات', {
+                    status: status,
+                    error: error,
+                    responseText: xhr.responseText
+                });
+                assignedToSelect.empty().append('<option value="">اختر نقطة الاستجابة</option>');
+                assignedToSelect.append('<option value="" disabled>حدث خطأ في تحميل البيانات</option>');
+                assignedToSelect.prop('disabled', false);
+            }
+        });
+    }
+
+    // استمع لتغيير منطقة العمليات
+    $('#operation_area_id').on('change', function() {
+        fetchResponsePoints($(this).val());
+    });
+
+    // تشغيل تلقائي إذا كان هناك قيمة محددة مسبقًا
+    if ($('#operation_area_id').val()) {
+        console.log('تشخيص: تحميل النقاط للقيمة المحددة مسبقًا');
+        fetchResponsePoints($('#operation_area_id').val());
+    }
+});
+</script>
+@endsection

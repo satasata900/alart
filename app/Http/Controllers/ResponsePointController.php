@@ -13,6 +13,56 @@ use Illuminate\Validation\Rule;
 class ResponsePointController extends Controller
 {
     /**
+     * إرجاع نقاط الاستجابة المرتبطة بمنطقة عمليات محددة (AJAX)
+     */
+    public function getByOperationArea($areaId)
+    {
+        try {
+            // التحقق من وجود منطقة العمليات
+            $operationArea = \App\Models\OperationArea::find($areaId);
+            if (!$operationArea) {
+                return response()->json([
+                    'error' => 'منطقة العمليات غير موجودة',
+                    'area_id' => $areaId
+                ], 404);
+            }
+
+            // جلب نقاط الاستجابة
+            $points = \App\Models\ResponsePoint::where('operation_area_id', $areaId)
+                ->where('is_active', true)
+                ->select('id', 'name', 'code', 'operation_area_id')
+                ->orderBy('name')
+                ->get();
+
+            // إضافة معلومات تشخيصية
+            $response = [
+                'data' => $points,
+                'count' => $points->count(),
+                'area_id' => $areaId,
+                'area_name' => $operationArea->name
+            ];
+
+            // إذا لم توجد نقاط، جلب جميع النقاط للتشخيص
+            if ($points->isEmpty()) {
+                $allPoints = \App\Models\ResponsePoint::select('id', 'name', 'code', 'operation_area_id', 'is_active')->get();
+                $response['debug'] = [
+                    'total_points_in_db' => $allPoints->count(),
+                    'active_points' => $allPoints->where('is_active', true)->count(),
+                    'points_for_this_area' => $allPoints->where('operation_area_id', $areaId)->count()
+                ];
+            }
+
+            return response()->json($response);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'حدث خطأ في الخادم',
+                'message' => $e->getMessage(),
+                'area_id' => $areaId
+            ], 500);
+        }
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index()
