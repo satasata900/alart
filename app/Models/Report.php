@@ -215,4 +215,14 @@ class Report extends Model
         
         return '\u0645\u062f\u064a\u0631 \u0627\u0644\u0646\u0638\u0627\u0645'; // مدير النظام
     }
+
+    /**
+     * الحصول على عنوان الموقع
+     *
+     * @return string
+     */
+    public function getLocationAttribute()
+    {
+        return $this->location_data['address'] ?? 'غير محدد';
+    }
 }

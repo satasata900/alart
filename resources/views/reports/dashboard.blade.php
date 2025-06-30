@@ -108,28 +108,22 @@
                         <thead>
                             <tr>
                                 <th>#</th>
+                                <th>عنوان البلاغ</th>
                                 <th>نوع البلاغ</th>
-                                <th>درجة الإلحاح</th>
+                                <th>مستوى الأهمية</th>
                                 <th>موقع البلاغ</th>
                                 <th>تاريخ البلاغ</th>
                                 <th>الحالة</th>
                                 <th>الإجراءات</th>
                             </tr>
                         </thead>
-                        <tbody class="table-border-bottom-0">
+                        <tbody>
                             @forelse($latestReports as $report)
                             <tr>
                                 <td>{{ $report->code }}</td>
+                                <td>{{ $report->title }}</td>
                                 <td>{{ $report->reportType->name }}</td>
-                                <td>
-                                    @if($report->urgency_level == 'high')
-                                        <span class="badge bg-danger">عالي</span>
-                                    @elseif($report->urgency_level == 'medium')
-                                        <span class="badge bg-warning">متوسط</span>
-                                    @else
-                                        <span class="badge bg-info">منخفض</span>
-                                    @endif
-                                </td>
+                                <td>{{ $report->urgency_level }}</td>
                                 <td>{{ $report->location }}</td>
                                 <td>{{ $report->created_at->format('Y-m-d H:i') }}</td>
                                 <td>
@@ -153,7 +147,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="7" class="text-center">لا توجد بلاغات حتى الآن</td>
+                                <td colspan="8" class="text-center">لا توجد بلاغات حتى الآن</td>
                             </tr>
                             @endforelse
                         </tbody>
